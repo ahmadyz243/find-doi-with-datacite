@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Welcome</title>
+</head>
+<body>
+
+    <form action="/find-by-id" method="get">
+
+        <label for="doiPrefix">DOI prefix</label>
+        <input id="doiPrefix" name="doiPrefix" type="text">
+
+        <label for="doiSuffix">DOI suffix</label>
+        <input id="doiSuffix" name="doiSuffix" type="text">
+
+        <button type="submit">find</button>
+    </form>
+
+    <p th:text="${provider}"></p>
+
+</body>
+</html>
