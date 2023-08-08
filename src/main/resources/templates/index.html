@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="js/bootstrap.js" type="application/javascript"></script>
+    <script src="js/jquery-3.7.0.js" type="application/javascript"></script>
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/main.css" rel="stylesheet">
     <meta charset="UTF-8">
     <title>Welcome</title>
 </head>
@@ -8,16 +13,62 @@
 
     <form action="/find-by-id" method="get">
 
-        <label for="doiPrefix">DOI prefix</label>
-        <input id="doiPrefix" name="doiPrefix" type="text">
+        <div class="mb-3">
+            <label class="form-label" for="doiPrefix">DOI prefix(example: 10.23661)</label>
+            <input id="doiPrefix" class="form-control" name="doiPrefix" type="text" required>
+        </div>
 
-        <label for="doiSuffix">DOI suffix</label>
-        <input id="doiSuffix" name="doiSuffix" type="text">
+        <div class="mb-3">
+            <label class="form-label" for="doiSuffix">DOI suffix(example: bp19.2020.v1.1)</label>
+            <input id="doiSuffix" class="form-control" name="doiSuffix" type="text" required>
+        </div>
 
-        <button type="submit">find</button>
+        <button class="btn btn-success" type="submit">find</button>
     </form>
 
-    <p th:text="${provider}"></p>
+    <h2 class="text-center" th:text="${provider}"></h2>
+    <hr>
+    <div th:if="${clients != null && clients.size > 0}">
+
+        <h2 class="text-center">other clients of this provider</h2>
+        <div id="tableContainer">
+            <table class="table table-dark table-hover text-center w-75 p-3">
+                <thead>
+                <tr>
+                    <th>client id</th>
+                    <th>actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="client: ${clients}">
+                    <td th:text="${client}"></td>
+                    <td><button class="viewDoiCountBtn btn btn-outline-light" type="button" th:value="${client}">view DOI's count</button></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script type="application/javascript">
+
+        $(".viewDoiCountBtn").click(function (){
+            const clientId = $(this).val();
+            $.ajax({
+                type: "GET",
+                url: "https://api.datacite.org/dois?client-id=" + clientId,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                async: false,
+                success: function (response) {
+                    alert("this client have " + response.data.length + " DOIs");
+                },
+                error: function (message) {
+                    alert("this client have no doi yet");
+                }
+            });
+        })
+
+    </script>
 
 </body>
 </html>

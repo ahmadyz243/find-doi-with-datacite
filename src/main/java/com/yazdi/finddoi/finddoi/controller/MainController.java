@@ -4,6 +4,7 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.Response;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,14 +25,26 @@ public class MainController {
     }
 
     @GetMapping("/find-by-id")
-    public ModelAndView findById(String doiPrefix, String doiSuffix) throws IOException {
+    public ModelAndView findById(String doiPrefix, String doiSuffix) {
 
-        String providerId = findProviderWithDoi(doiPrefix, doiSuffix);
-        List<String> clients = findProviderClients(providerId);
+        String providerId;
+        List<String> clients = new ArrayList<>();
+
+        try {
+            providerId = findProviderWithDoi(doiPrefix, doiSuffix);
+            clients = findProviderClients(providerId);
+        } catch (IOException e) {
+            return new ModelAndView("index")
+                    .addObject(
+                            "provider"
+                            , "DOI or provider was not found!!!")
+                    .addObject("clients", clients);
+        }
+
         return new ModelAndView("index")
                 .addObject(
                         "provider"
-                        , "the provider id is --> " + providerId)
+                        , "the provider id is " + providerId)
                 .addObject("clients", clients);
 
     }
@@ -46,7 +59,13 @@ public class MainController {
 
         Response response = client.newCall(request).execute();
         String jsonData = response.body().string();
-        JSONObject data = (JSONObject) new JSONObject(jsonData).get("data");
+        JSONObject data;
+
+        try {
+            data =  (JSONObject) new JSONObject(jsonData).get("data");
+        }catch (JSONException e){
+            throw new IOException();
+        }
 
         /*
         JSONArray jsonArray = jsonObject.getJSONArray("data");
