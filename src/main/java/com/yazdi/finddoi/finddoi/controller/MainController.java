@@ -25,83 +25,46 @@ public class MainController {
     }
 
     @GetMapping("/find-by-id")
-    public ModelAndView findById(String doiPrefix, String doiSuffix) {
+    public ModelAndView findById(String consortiumId) {
 
-        String providerId;
-        List<String> clients = new ArrayList<>();
-
+        List<String> providers;
         try {
-            providerId = findProviderWithDoi(doiPrefix, doiSuffix);
-            clients = findProviderClients(providerId);
+            providers = findProvidersWithConsotiumId(consortiumId);
+            return new ModelAndView("index").addObject("providers", providers);
         } catch (IOException e) {
             return new ModelAndView("index")
-                    .addObject(
-                            "provider"
-                            , "DOI or provider was not found!!!")
-                    .addObject("clients", clients);
+                    .addObject("message", "consortium or providers was not found");
         }
-
-        return new ModelAndView("index")
-                .addObject(
-                        "provider"
-                        , "the provider id is " + providerId)
-                .addObject("clients", clients);
 
     }
 
-    public String findProviderWithDoi(String doiPrefix, String doiSuffix) throws IOException {
+    public List<String> findProvidersWithConsotiumId(String consortuimId) throws IOException {
 
         OkHttpClient client = new OkHttpClient();
         Request request = new Request.Builder()
-                .url("https://api.datacite.org/dois/" + doiPrefix + "/" + doiSuffix)
+                .url("https://api.datacite.org/providers?consortium-id=" + consortuimId)
                 .get()
                 .build();
 
         Response response = client.newCall(request).execute();
         String jsonData = response.body().string();
-        JSONObject data;
 
+        JSONArray dataArray;
         try {
-            data =  (JSONObject) new JSONObject(jsonData).get("data");
+            dataArray = new JSONObject(jsonData).getJSONArray("data");
+            if (dataArray.length() == 0){
+                throw new IOException();
+            }
         }catch (JSONException e){
             throw new IOException();
         }
 
-        /*
-        JSONArray jsonArray = jsonObject.getJSONArray("data");
-
-        for (int i = 0; i < jsonArray.length(); i++) {
-            JSONObject object     = jsonArray.getJSONObject(i);
-        }
-        */
-
-        JSONObject relationships = new JSONObject(data.get("relationships").toString());
-        JSONObject provider = new JSONObject(relationships.get("provider").toString());
-        JSONObject providerData = new JSONObject(provider.get("data").toString());
-        return (String) providerData.get("id");
-
-    }
-
-    public List<String> findProviderClients(String providerId) throws IOException {
-
-        OkHttpClient client = new OkHttpClient();
-        Request request = new Request.Builder()
-                .url("https://api.datacite.org/clients?provider-id=" + providerId)
-                .get()
-                .build();
-
-        Response response = client.newCall(request).execute();
-        String jsonData = response.body().string();
-        JSONArray data = (JSONArray) new JSONObject(jsonData).get("data");
-        List<String> clientIds = new ArrayList<>();
-
-        for (int i = 0; i < data.length(); i++) {
-            clientIds.add(
-                    data.getJSONObject(i).get("id").toString()
-            );
+        List<String> providers = new ArrayList<>();
+        for (int i = 0; i < dataArray.length(); i++) {
+            providers.add(dataArray.getJSONObject(i).get("id").toString());
         }
 
-        return clientIds;
+        return providers;
 
     }
 
